@@ -128,6 +128,12 @@ class ModelScopeLLM(CustomLLM):
     ) -> None:
         """Initialize params."""
         model_kwargs = model_kwargs or {}
+
+        # # Auto-detect XPU when device_map is "auto" and CUDA is not available
+        # if device_map == "auto" and not torch.cuda.is_available():
+        #     if hasattr(torch, "xpu") and torch.xpu.is_available():
+        #         device_map = "xpu"
+
         if model:
             pipeline = model
         else:

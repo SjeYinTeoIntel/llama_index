@@ -44,7 +44,7 @@ class LongLLMLinguaPostprocessor(BaseNodePostprocessor):
     def __init__(
         self,
         model_name: str = "NousResearch/Llama-2-7b-hf",
-        device_map: Literal["cuda", "cpu", "mps"] = "cuda",
+        device_map: Optional[Literal["cuda", "cpu", "mps", "xpu"]] = None,
         model_config: Optional[dict] = {},
         open_api_config: Optional[dict] = {},
         instruction_str: str = DEFAULT_INSTRUCTION_STR,
@@ -54,7 +54,11 @@ class LongLLMLinguaPostprocessor(BaseNodePostprocessor):
         use_llmlingua2: bool = False,
     ):
         """LongLLMLingua Compressor for Node Context."""
+        from llama_index.core.utils import infer_torch_device
         from llmlingua import PromptCompressor
+
+        if device_map is None:
+            device_map = infer_torch_device()
 
         super().__init__(
             instruction_str=instruction_str,

@@ -102,24 +102,25 @@ except ImportError:
     from langchain.tools import BaseTool, StructuredTool, Tool
 
 # Models
-from langchain_community.chat_models import (
-    ChatAnyscale,
-    ChatOpenAI,
-    ChatFireworks,
-)
-from langchain_community.embeddings import (
-    HuggingFaceBgeEmbeddings,
-    HuggingFaceEmbeddings,
-)
-
-# LLMs
-from langchain_community.llms import (
-    AI21,
-    BaseLLM,
-    Cohere,
-    FakeListLLM,
-    OpenAI,
-)
+try:
+    from langchain_community.chat_models import (
+        ChatAnyscale,
+        ChatOpenAI,
+        ChatFireworks,
+    )
+    from langchain_community.embeddings import (
+        HuggingFaceBgeEmbeddings,
+        HuggingFaceEmbeddings,
+    )
+    from langchain_community.llms import (
+        AI21,
+        BaseLLM,
+        Cohere,
+        FakeListLLM,
+        OpenAI,
+    )
+except ImportError:
+    pass
 
 __all__ = [
     "langchain",

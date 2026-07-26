@@ -247,13 +247,18 @@ class Vllm(LLM):
             "n": self.n,
             "frequency_penalty": self.frequency_penalty,
             "presence_penalty": self.presence_penalty,
-            "best_of": self.best_of,
             "ignore_eos": self.ignore_eos,
             "stop": self.stop,
             "logprobs": self.logprobs,
             "top_k": self.top_k,
             "top_p": self.top_p,
         }
+        if self.best_of is not None:
+            from vllm import SamplingParams as _SP
+            import inspect
+
+            if "best_of" in inspect.signature(_SP).parameters:
+                base_kwargs["best_of"] = self.best_of
         return {**base_kwargs}
 
     @atexit.register
@@ -261,10 +266,13 @@ class Vllm(LLM):
         import torch
         import gc
 
+        gc.collect()
         if torch.cuda.is_available():
-            gc.collect()
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
+        elif hasattr(torch, "xpu") and torch.xpu.is_available():
+            torch.xpu.empty_cache()
+            torch.xpu.synchronize()
 
     def _get_all_kwargs(self, **kwargs: Any) -> Dict[str, Any]:
         return {
