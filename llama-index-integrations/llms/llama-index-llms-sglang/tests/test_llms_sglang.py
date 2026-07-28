@@ -69,16 +69,19 @@ def test_stream_complete(mock_post_http_request):
     mock_response = Mock()
 
     chunks = [
-        b'data: {"choices": [{"text": "Hello"}]}\n',
-        b'data: {"choices": [{"text": " world"}]}\n',
+        b'data: {"choices": [{"delta": {"content": "Hello"}}]}\n',
+        b'data: {"choices": [{"delta": {"content": " world"}}]}\n',
         b"data: [DONE]\n",
     ]
     mock_response.iter_lines.return_value = iter(chunks)
     mock_post_http_request.return_value = mock_response
 
-    llm = SGLang(api_url="http://test:8000")
+    llm = SGLang(api_url="http://test:8000", is_chat_model=True)
     gen = llm.stream_complete("Test prompt")
 
     results = list(gen)
-    assert len(results) == 2
+    assert len(results) == 3  # 2 content chunks + 1 final empty delta
     assert results[0].delta == "Hello"
+    assert results[1].delta == " world"
+    assert results[2].delta == ""
+    assert results[2].text == "Hello world"

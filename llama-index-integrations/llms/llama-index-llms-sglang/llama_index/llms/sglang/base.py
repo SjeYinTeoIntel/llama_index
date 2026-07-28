@@ -242,20 +242,22 @@ class SGLang(LLM):
         kwargs = kwargs if kwargs else {}
         params = {**self._model_kwargs, **kwargs}
 
-        # Build sampling parameters for SGLang
         sampling_params = dict(**params)
-        # SGLang OpenAI-compatible API uses 'prompt' parameter
-        sampling_params["prompt"] = prompt
         sampling_params["model"] = self.model
 
-        # Use OpenAI-compatible endpoint
-        endpoint = f"{self.api_url}/v1/completions"
+        if self.is_chat_model:
+            sampling_params["messages"] = [{"role": "user", "content": prompt}]
+            endpoint = f"{self.api_url}/v1/chat/completions"
+        else:
+            sampling_params["prompt"] = prompt
+            endpoint = f"{self.api_url}/v1/completions"
+
         response = post_http_request(
             endpoint, sampling_params, stream=False, api_key=self.api_key
         )
         output = get_response(response)
 
-        return CompletionResponse(text=output[0])
+        return CompletionResponse(text=output[0] if output else "")
 
     @llm_chat_callback()
     def stream_chat(
@@ -273,10 +275,15 @@ class SGLang(LLM):
         params = {**self._model_kwargs, **kwargs}
 
         sampling_params = dict(**params)
-        sampling_params["text"] = prompt
+        sampling_params["model"] = self.model
 
-        # SGLang uses OpenAI-compatible API, so use /v1/completions for streaming
-        endpoint = f"{self.api_url}/v1/completions"
+        if self.is_chat_model:
+            sampling_params["messages"] = [{"role": "user", "content": prompt}]
+            endpoint = f"{self.api_url}/v1/chat/completions"
+        else:
+            sampling_params["prompt"] = prompt
+            endpoint = f"{self.api_url}/v1/completions"
+
         response = post_http_request(
             endpoint, sampling_params, stream=True, api_key=self.api_key
         )
@@ -288,7 +295,6 @@ class SGLang(LLM):
             ):
                 if chunk:
                     chunk_str = chunk.decode("utf-8")
-                    # Handle SSE format
                     if chunk_str.startswith("data: "):
                         chunk_str = chunk_str[6:]
 
@@ -297,13 +303,16 @@ class SGLang(LLM):
 
                     try:
                         data = json.loads(chunk_str)
-                        # OpenAI format has choices array
                         if "choices" in data and len(data["choices"]) > 0:
-                            delta = data["choices"][0].get("text", "")
+                            delta = (
+                                data["choices"][0].get("delta", {}).get("content", "")
+                            ) or data["choices"][0].get("text", "")
                             response_str += delta
                             yield CompletionResponse(text=response_str, delta=delta)
                     except json.JSONDecodeError:
                         continue
+
+            yield CompletionResponse(text=response_str, delta="")
 
         return gen()
 
