@@ -1,3 +1,4 @@
+import os
 import subprocess
 import pytest
 import pytest_asyncio
@@ -84,6 +85,10 @@ NODES = [
 
 @pytest.fixture()
 def vectorstore() -> GelVectorStore:
+    if not os.getenv("GEL_TEST_DSN"):
+        pytest.skip(
+            "Gel integration tests require GEL_TEST_DSN and a provisioned Gel DB"
+        )
     vectorstore = GelVectorStore()
     vectorstore.clear()
     return vectorstore
@@ -91,6 +96,10 @@ def vectorstore() -> GelVectorStore:
 
 @pytest_asyncio.fixture()
 async def vectorstore_async() -> GelVectorStore:
+    if not os.getenv("GEL_TEST_DSN"):
+        pytest.skip(
+            "Gel integration tests require GEL_TEST_DSN and a provisioned Gel DB"
+        )
     vectorstore = GelVectorStore()
     await vectorstore.aclear()
     return vectorstore

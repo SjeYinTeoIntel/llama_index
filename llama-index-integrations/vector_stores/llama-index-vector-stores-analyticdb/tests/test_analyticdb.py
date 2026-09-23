@@ -13,7 +13,7 @@ except ImportError:
     analyticdb_installed = False
 
 
-def _create_mock_vector_store(client: Client):
+def _create_mock_vector_store(client: "Client"):
     return AnalyticDBVectorStore(
         client=client,
         region_id="cn-hangzhou",
